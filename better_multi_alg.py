@@ -1,7 +1,9 @@
 from pettingzoo import AECEnv, ParallelEnv
-from multi_agent_algs.parallel_alg import ParallelAlgorithm
-from multi_agent_algs.aec_alg import AECAlgorithm
+
 from typing import Union
+
+from unstable_baselines3.parallel_alg import ParallelAlgorithm
+from unstable_baselines3.aec_alg import AECAlgorithm
 
 
 def multi_agent_algorithm(

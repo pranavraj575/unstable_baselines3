@@ -1,10 +1,11 @@
 from pettingzoo import ParallelEnv
 
-from common import conform_act_shape
-from multi_agent_alg import MultiAgentAlgorithm
-from ppo.PPO import WorkerPPO
-
 from stable_baselines3.ppo import MlpPolicy
+
+from unstable_baselines3.common import conform_act_shape
+from unstable_baselines3.multi_agent_alg import MultiAgentAlgorithm
+from unstable_baselines3.ppo.PPO import WorkerPPO
+
 
 
 class ParallelAlgorithm(MultiAgentAlgorithm):

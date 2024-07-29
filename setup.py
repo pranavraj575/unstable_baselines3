@@ -2,7 +2,7 @@ from distutils.core import setup
 from setuptools import find_packages
 
 setup(
-    name='multi_agent_algs',
+    name='unstable_baselines3',
     version='6.9.0',
     packages=find_packages(),
     install_requires=[

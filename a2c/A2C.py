@@ -1,5 +1,6 @@
 from stable_baselines3.a2c import A2C
-from multi_agent_algs.on_policy import OnPolicy
+
+from unstable_baselines3.on_policy import OnPolicy
 
 
 class WorkerA2C(A2C, OnPolicy):

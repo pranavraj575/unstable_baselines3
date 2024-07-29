@@ -2,8 +2,9 @@ import numpy as np
 import torch
 from gymnasium import spaces
 
-from common import conform_shape, conform_act_shape
 from stable_baselines3.common.utils import obs_as_tensor
+
+from unstable_baselines3.common import conform_shape, conform_act_shape
 
 
 class OnPolicy:
@@ -155,7 +156,7 @@ class OnPolicy:
             values,
             log_probs,
         )
-        self._last_obs = conform_shape(new_obs,obs_space=self.observation_space)  # type: ignore[assignment]
+        self._last_obs = conform_shape(new_obs, obs_space=self.observation_space)  # type: ignore[assignment]
         self._last_episode_starts = dones
         # if current rollout size is less than max rollout size, continue rollout
         return {

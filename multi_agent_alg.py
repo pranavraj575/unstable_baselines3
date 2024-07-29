@@ -1,8 +1,10 @@
 from pettingzoo import AECEnv, ParallelEnv
-from common import DumEnv
-from utils.dict_keys import DICT_TRAIN
 from typing import Union
-from ppo.PPO import WorkerPPO
+
+from unstable_baselines3.common import DumEnv
+from unstable_baselines3.utils.dict_keys import DICT_TRAIN
+from unstable_baselines3.ppo.PPO import WorkerPPO
+
 from stable_baselines3.ppo import MlpPolicy
 
 

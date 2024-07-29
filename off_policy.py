@@ -1,8 +1,8 @@
 import numpy as np
 
-from stable_baselines3.dqn import DQN
 from stable_baselines3.common.type_aliases import TrainFreq
-from common import conform_shape
+
+from unstable_baselines3.common import conform_shape
 
 
 class OffPolicy:

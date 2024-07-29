@@ -1,5 +1,6 @@
 from stable_baselines3.ddpg import DDPG
-from multi_agent_algs.off_policy import OffPolicy
+
+from unstable_baselines3.off_policy import OffPolicy
 
 
 class WorkerDDPG(DDPG, OffPolicy):
