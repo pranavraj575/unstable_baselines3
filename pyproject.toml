@@ -18,11 +18,14 @@ dependencies = [
         'torch',
         'stable-baselines3',
 ]
+[project.optional-dependencies]
+gui = ["pygame"]
+
 [project.urls]
 Homepage = "https://github.com/pranavraj575/unstable_baselines3"
 
 [tool.coverage.run]
 omit = [
-    "tests/*",
-    "tests",
+    "unstable_baselines3_tests/*",
+    "unstable_baselines3_tests",
     ]

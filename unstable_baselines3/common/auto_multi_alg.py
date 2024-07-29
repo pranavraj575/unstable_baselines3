@@ -12,6 +12,7 @@ def AutoMultiAgentAlgorithm(
         worker_infos=None,
         *args,
         **kwargs, ) -> Union[AECAlgorithm, ParallelAlgorithm]:
+    env.reset()
     if isinstance(env, AECEnv):
         return AECAlgorithm(env=env,
                             workers=workers,

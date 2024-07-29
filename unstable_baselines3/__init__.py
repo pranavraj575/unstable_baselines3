@@ -4,20 +4,24 @@ from unstable_baselines3.dqn import WorkerDQN
 from unstable_baselines3.ppo import WorkerPPO
 from unstable_baselines3.sac import WorkerSAC
 from unstable_baselines3.td3 import WorkerTD3
-from unstable_baselines3.common.auto_multi_alg import AutoMultiAgentAlgorithm
-from unstable_baselines3.common.parallel_alg import ParallelAlgorithm
-from unstable_baselines3.common.aec_alg import AECAlgorithm
-from unstable_baselines3.common.multi_agent_alg import MultiAgentAlgorithm
+from unstable_baselines3.common import (MultiAgentAlgorithm,
+                                        AECAlgorithm,
+                                        ParallelAlgorithm,
+                                        AutoMultiAgentAlgorithm,
+                                        DumEnv,
+                                        )
 
 __all__ = [
-    "AutoMultiAgentAlgorithm",
-    "MultiAgentAlgorithm",
-    "ParallelAlgorithm",
-    "AECAlgorithm",
     "WorkerA2C",
     "WorkerDDPG",
     "WorkerDQN",
     "WorkerPPO",
     "WorkerSAC",
     "WorkerTD3",
+
+    'MultiAgentAlgorithm',
+    'AECAlgorithm',
+    'ParallelAlgorithm',
+    'AutoMultiAgentAlgorithm',
+    'DumEnv',
 ]

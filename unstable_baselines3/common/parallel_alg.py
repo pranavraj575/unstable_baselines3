@@ -1,11 +1,11 @@
 from pettingzoo import ParallelEnv
 
 from stable_baselines3.ppo import MlpPolicy
+from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 
 from unstable_baselines3.common.common import conform_act_shape
 from unstable_baselines3.common.multi_agent_alg import MultiAgentAlgorithm
-from unstable_baselines3.ppo.PPO import WorkerPPO
-
+from unstable_baselines3.ppo import WorkerPPO
 
 
 class ParallelAlgorithm(MultiAgentAlgorithm):
@@ -135,15 +135,23 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
                     rollout_1_info=local_rollout_1_info[agent],
                 )
                 actions[agent] = conform_act_shape(act,
-                                                   self.workers[agent].action_space,
+                                                   self.env.action_space(agent=agent),
                                                    )
                 local_rollout_2_info[agent] = rollout_2_info
             # also handle the untrainable agents
             for agent in self.get_untrainable_workers():
-                act = self.workers[agent].get_action(
-                    obs=self.last_observations[agent]
-                )
-                actions[agent] = act
+                if isinstance(self.workers[agent], OnPolicyAlgorithm):
+                    act, _ = self.workers[agent].get_action(
+                        obs=self.last_observations[agent]
+                    )
+                    act = act.cpu().numpy()
+                else:
+                    act = self.workers[agent].get_action(
+                        obs=self.last_observations[agent]
+                    )
+                actions[agent] = conform_act_shape(act,
+                                                   self.env.action_space(agent=agent),
+                                                   )
 
             self.last_observations, rewards, terminations, truncations, self.last_infos = self.env.step(actions)
             truncation = any([t for (_, t) in truncations.items()])

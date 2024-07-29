@@ -1,9 +1,11 @@
 from pettingzoo import AECEnv
 
+from stable_baselines3.ppo import MlpPolicy
+from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
+
 from unstable_baselines3.common.multi_agent_alg import MultiAgentAlgorithm
 from unstable_baselines3.ppo.PPO import WorkerPPO
 
-from stable_baselines3.ppo import MlpPolicy
 
 
 class AECAlgorithm(MultiAgentAlgorithm):
@@ -107,6 +109,7 @@ class AECAlgorithm(MultiAgentAlgorithm):
                 # reset records
                 self.agent_records = dict()
 
+
             # inner loop, should run until env ends
             for agent in self.env.agent_iter():
                 # let previous timestep be t and current timestep be t+1
@@ -116,7 +119,11 @@ class AECAlgorithm(MultiAgentAlgorithm):
 
                 term = termination or truncation
                 if term:
+                    # for AEC algs, a terminal envionrment means only valid action is None,
+                    # there is also no learning to be done here
                     self.reset_env = True
+                    self.env.step(None)
+                    continue
 
                 if agent in self.agent_records:
                     # if we have a previous timestep, finish the rollout, and remove it from memory
@@ -162,7 +169,11 @@ class AECAlgorithm(MultiAgentAlgorithm):
                         (new_obs, act), (rollout_1_info, rollout_2_info)
                     )
                 else:
-                    act = self.workers[agent].get_action(obs=new_obs)
+                    if isinstance(self.workers[agent], OnPolicyAlgorithm):
+                        act, _ = self.workers[agent].get_action(obs=new_obs)
+                        act = act.cpu().numpy()
+                    else:
+                        act = self.workers[agent].get_action(obs=new_obs)
                     self.env.step(act)
 
         # end rollout

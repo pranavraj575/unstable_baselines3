@@ -5,6 +5,11 @@ from stable_baselines3.common.preprocessing import check_for_nested_spaces, is_i
     is_image_space_channels_first
 
 def conform_shape(obs, obs_space):
+    if isinstance(obs,dict):
+        return {
+        key:conform_shape(obs[key],obs_space[key])
+            for key in obs
+        }
     if len(obs.shape) == 1:
         obs = obs.reshape((1, -1))
     if obs_space.shape != obs.shape:
@@ -17,6 +22,8 @@ def conform_shape(obs, obs_space):
 
 
 def conform_act_shape(act, act_space):
+    if isinstance(act,(int,float)):
+        return act
     act = act.reshape(act_space.shape)
     if isinstance(act_space, spaces.Discrete) and not isinstance(act, int):
         act = act.reshape(1)[0]

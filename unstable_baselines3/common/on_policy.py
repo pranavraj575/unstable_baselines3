@@ -169,7 +169,11 @@ class OnPolicy:
         self._last_obs = conform_shape(obs, self.observation_space)
         # Convert to pytorch tensor or to TensorDict
         # TODO: why for image spaces does this work
-        obs_tensor = obs_as_tensor(self._last_obs, self.device).unsqueeze(0)
+        obs_tensor = obs_as_tensor(self._last_obs, self.device)
+        if isinstance(obs_tensor,dict):
+            pass
+        else:
+            obs_tensor=obs_tensor.unsqueeze(0)
         actions, values, log_probs = self.policy(obs_tensor)
         return actions, (values, log_probs)
 

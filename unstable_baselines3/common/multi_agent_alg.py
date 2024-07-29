@@ -39,6 +39,8 @@ class MultiAgentAlgorithm:
             workers = dict()
         if worker_infos is None:
             worker_infos = dict()
+        # to view agents
+        env.reset()
         for agent in env.agents:
             if agent not in worker_infos:
                 worker_infos[agent] = {
