@@ -7,8 +7,8 @@ from stable_baselines3.dqn.dqn import DQN
 
 from stable_baselines3.ppo.policies import MlpPolicy as PPOPolicy
 
-from unstable_baselines3.unstable_baselines3.ppo.PPO import WorkerPPO
-from unstable_baselines3.unstable_baselines3.common.better_multi_alg import multi_agent_algorithm
+from unstable_baselines3.ppo.PPO import WorkerPPO
+from unstable_baselines3.common.auto_multi_alg import AutoMultiAgentAlgorithm
 import os, sys
 
 Worker = WorkerPPO
@@ -40,19 +40,19 @@ class easy_pred:
         return self.choice
 
 
-thingy = multi_agent_algorithm(policy=MlpPolicy,
-                               env=env,
-                               DefaultWorkerClass=Worker,
-                               worker_infos={'player_1': {'train': False}},
-                               workers={'player_1': easy_pred()},
-                               gamma=0.,
+thingy = AutoMultiAgentAlgorithm(policy=MlpPolicy,
+                                 env=env,
+                                 DefaultWorkerClass=Worker,
+                                 worker_infos={'player_1': {'train': False}},
+                                 workers={'player_1': easy_pred()},
+                                 gamma=0.,
 
-                               # buffer_size=1000,
-                               # learning_starts=10,
+                                 # buffer_size=1000,
+                                 # learning_starts=10,
 
-                               n_steps=200,
-                               batch_size=100,
-                               )
+                                 n_steps=200,
+                                 batch_size=100,
+                                 )
 
 thingy.learn(total_timesteps=400)
 
@@ -62,18 +62,18 @@ worker0: Worker
 
 env = rps_v2.parallel_env(render_mode="human")
 
-thingy = multi_agent_algorithm(policy=MlpPolicy,
-                               env=env,
-                               DefaultWorkerClass=Worker,
-                               worker_infos={'player_1': {'train': False}},
-                               workers={'player_1': easy_pred()},
-                               gamma=0.,
+thingy = AutoMultiAgentAlgorithm(policy=MlpPolicy,
+                                 env=env,
+                                 DefaultWorkerClass=Worker,
+                                 worker_infos={'player_1': {'train': False}},
+                                 workers={'player_1': easy_pred()},
+                                 gamma=0.,
 
-                               # buffer_size=1000,
-                               # learning_starts=10,
+                                 # buffer_size=1000,
+                                 # learning_starts=10,
 
-                               n_steps=200,
-                               batch_size=100,
-                               )
+                                 n_steps=200,
+                                 batch_size=100,
+                                 )
 
 thingy.learn(total_timesteps=10)

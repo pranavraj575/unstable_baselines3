@@ -6,7 +6,7 @@ from unstable_baselines3.common.parallel_alg import ParallelAlgorithm
 from unstable_baselines3.common.aec_alg import AECAlgorithm
 
 
-def multi_agent_algorithm(
+def AutoMultiAgentAlgorithm(
         env: Union[AECEnv, ParallelEnv],
         workers,
         worker_infos=None,
