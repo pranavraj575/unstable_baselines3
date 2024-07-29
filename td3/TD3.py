@@ -1,6 +1,6 @@
 from stable_baselines3.td3 import TD3
 
-from unstable_baselines3.off_policy import OffPolicy
+from unstable_baselines3.common.off_policy import OffPolicy
 
 
 class WorkerTD3(TD3, OffPolicy):

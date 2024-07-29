@@ -1,6 +1,6 @@
 from stable_baselines3.sac import SAC
 
-from unstable_baselines3.on_policy import OnPolicy
+from unstable_baselines3.common.on_policy import OnPolicy
 
 
 class WorkerSAC(SAC, OnPolicy):

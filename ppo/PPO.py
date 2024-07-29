@@ -1,7 +1,7 @@
 from stable_baselines3.ppo import PPO
 from stable_baselines3.common.utils import get_schedule_fn
 
-from unstable_baselines3.on_policy import OnPolicy
+from unstable_baselines3.common.on_policy import OnPolicy
 
 
 class WorkerPPO(PPO, OnPolicy):

@@ -1,6 +1,6 @@
 from stable_baselines3.dqn import DQN
 
-from unstable_baselines3.off_policy import OffPolicy
+from unstable_baselines3.common.off_policy import OffPolicy
 
 
 class WorkerDQN(DQN, OffPolicy):

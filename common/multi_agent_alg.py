@@ -1,7 +1,7 @@
 from pettingzoo import AECEnv, ParallelEnv
 from typing import Union
 
-from unstable_baselines3.common import DumEnv
+from unstable_baselines3.common.common import DumEnv
 from unstable_baselines3.utils.dict_keys import DICT_TRAIN
 from unstable_baselines3.ppo.PPO import WorkerPPO
 
