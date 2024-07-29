@@ -7,8 +7,8 @@ from stable_baselines3.dqn.dqn import DQN
 
 from stable_baselines3.ppo.policies import MlpPolicy as PPOPolicy
 
-from unstable_baselines3.ppo.PPO import WorkerPPO
-from unstable_baselines3.common.better_multi_alg import multi_agent_algorithm
+from unstable_baselines3.unstable_baselines3.ppo.PPO import WorkerPPO
+from unstable_baselines3.unstable_baselines3.common.better_multi_alg import multi_agent_algorithm
 import os, sys
 
 Worker = WorkerPPO
