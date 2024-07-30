@@ -3,7 +3,6 @@ import torch
 from gymnasium import spaces
 
 from stable_baselines3.common.utils import obs_as_tensor
-
 from unstable_baselines3.common.common import conform_shape, conform_act_shape
 
 
