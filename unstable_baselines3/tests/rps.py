@@ -7,23 +7,31 @@ from stable_baselines3.dqn.dqn import DQN
 
 from stable_baselines3.ppo.policies import MlpPolicy as PPOPolicy
 
-from unstable_baselines3.ppo.PPO import WorkerPPO
+from unstable_baselines3 import WorkerPPO, WorkerDQN
 from unstable_baselines3.common.multi_agent_alg import DumEnv
 from unstable_baselines3.common.auto_multi_alg import AutoMultiAgentAlgorithm
 from stable_baselines3.common.utils import spaces
 import os, sys
 
-Worker = WorkerPPO
+Worker = WorkerDQN
 
+kwargs = {'batch_size': 128,
+          'gamma': 0,
+          }
 if issubclass(Worker, DQN):
     MlpPolicy = DQNPolicy
+    kwargs['learning_starts'] = 128
 else:
     MlpPolicy = PPOPolicy
+    kwargs['n_steps'] = 128
 
 DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.join(os.getcwd(), sys.argv[0]))))
 
-# env = rps_v2.env()
-env = rps_v2.parallel_env()
+# both work
+env = rps_v2.env()
+#env = rps_v2.parallel_env()
+
+
 env.reset()
 
 action_space = env.action_space('player_0')
@@ -37,12 +45,11 @@ class always_0:
 
 class easy_pred:
     def __init__(self, p=.01):
-        self.choice = 0
         self.p = p
 
     def get_action(self, obs, *args, **kwargs):
         # if initialized game or random chance
-        if obs == 4 or np.random.random() < self.p:
+        if obs == 3 or np.random.random() < self.p:
             self.choice = np.random.randint(3)
 
         return self.choice
@@ -54,9 +61,7 @@ worker0 = Worker(env=DumEnv(action_space=action_space,
                             obs_space=obs_space,
                             ),
                  policy=MlpPolicy,
-                 n_steps=512,
-                 batch_size=512,
-                 gamma=0.,
+                 **kwargs,
                  )
 
 thingy = AutoMultiAgentAlgorithm(policy=MlpPolicy,
@@ -74,7 +79,7 @@ thingy = AutoMultiAgentAlgorithm(policy=MlpPolicy,
                                  # DefaultWorkerClass is only for if all players are not specified in workers
                                  )
 print('starting training1')
-thingy.learn(total_timesteps=5000)
+thingy.learn(total_timesteps=4096*4)
 print('trained')
 
 # display
@@ -89,78 +94,6 @@ thingy = AutoMultiAgentAlgorithm(policy=MlpPolicy,
                                  workers={'player_0': worker0,
                                           'player_1': easy_pred()},
 
-                                 )
-
-thingy.learn(total_timesteps=10)
-
-# we will now hold worker 0 fixed and train a ppo agent to beat that policy
-
-worker1 = Worker(env=DumEnv(action_space=action_space,
-                            obs_space=obs_space,
-                            ),
-                 policy=MlpPolicy,
-                 n_steps=512,
-                 batch_size=512,
-                 gamma=0.,
-                 )
-
-thingy = AutoMultiAgentAlgorithm(policy=MlpPolicy,
-                                 env=env,
-                                 worker_infos={
-                                     'player_0': {'train': False},
-                                     'player_1': {'train': True},
-                                 },
-                                 workers={'player_0': worker0,
-                                          'player_1': worker1},
-
-                                 )
-
-print('starting training2')
-thingy.learn(total_timesteps=10000)
-print('trained')
-
-# display
-thingy = AutoMultiAgentAlgorithm(policy=MlpPolicy,
-                                 env=disp_env,
-                                 worker_infos={
-                                     'player_0': {'train': False},
-                                     'player_1': {'train': False},
-                                 },
-                                 workers={'player_0': worker0,
-                                          'player_1': worker1},
-
-                                 )
-
-thingy.learn(total_timesteps=10)
-
-# we will now train both workers at the same time
-# since the game is rock paper scissors, they should unlearn their moves and mostly make random moves
-
-
-thingy = AutoMultiAgentAlgorithm(policy=MlpPolicy,
-                                 env=env,
-                                 worker_infos={
-                                     'player_0': {'train': True},
-                                     'player_1': {'train': True},
-                                 },
-                                 workers={'player_0': worker0,
-                                          'player_1': worker1},
-
-                                 )
-
-print('starting training3')
-thingy.learn(total_timesteps=10000)
-print('trained')
-
-# display
-thingy = AutoMultiAgentAlgorithm(policy=MlpPolicy,
-                                 env=disp_env,
-                                 worker_infos={
-                                     'player_0': {'train': False},
-                                     'player_1': {'train': False},
-                                 },
-                                 workers={'player_0': worker0,
-                                          'player_1': worker1},
                                  )
 
 thingy.learn(total_timesteps=10)

@@ -1,11 +1,12 @@
 from pettingzoo import AECEnv
 
 from stable_baselines3.ppo import MlpPolicy
+from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 
 from unstable_baselines3.common.multi_agent_alg import MultiAgentAlgorithm
 from unstable_baselines3.ppo.PPO import WorkerPPO
-
+from unstable_baselines3.common.common import conform_act_shape
 
 
 class AECAlgorithm(MultiAgentAlgorithm):
@@ -109,7 +110,6 @@ class AECAlgorithm(MultiAgentAlgorithm):
                 # reset records
                 self.agent_records = dict()
 
-
             # inner loop, should run until env ends
             for agent in self.env.agent_iter():
                 # let previous timestep be t and current timestep be t+1
@@ -164,17 +164,17 @@ class AECAlgorithm(MultiAgentAlgorithm):
                         init_rollout_info=local_init_rollout_info[agent],
                         rollout_1_info=rollout_1_info,
                     )
-                    self.env.step(act)
                     self.agent_records[agent] = (
                         (new_obs, act), (rollout_1_info, rollout_2_info)
                     )
                 else:
-                    if isinstance(self.workers[agent], OnPolicyAlgorithm):
+                    if isinstance(self.workers[agent], BaseAlgorithm):
                         act, _ = self.workers[agent].get_action(obs=new_obs)
-                        act = act.cpu().numpy()
+                        if isinstance(self.workers[agent], OnPolicyAlgorithm):
+                            act = act.cpu().numpy()
                     else:
                         act = self.workers[agent].get_action(obs=new_obs)
-                    self.env.step(act)
+                self.env.step(conform_act_shape(act, self.env.action_space(agent=agent), ))
 
         # end rollout
         local_end_rollout_info = dict()
