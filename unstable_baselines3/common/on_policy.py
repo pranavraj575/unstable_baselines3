@@ -3,7 +3,6 @@ import torch
 from gymnasium import spaces
 
 from stable_baselines3.common.utils import obs_as_tensor
-
 from unstable_baselines3.common.common import conform_shape, conform_act_shape
 
 
@@ -185,7 +184,7 @@ class OnPolicy:
         if rollout_buffer is None:
             rollout_buffer = self.rollout_buffer
 
-        if self.num_collected_steps < self.n_steps:
+        if not rollout_buffer.full:
             # if we have not collected enough training steps to fill rollout, continue
             return {'num_collected_steps': self.num_collected_steps - self.starting_steps,
                     'rollout_filled': False,
