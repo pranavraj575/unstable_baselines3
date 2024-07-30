@@ -103,7 +103,6 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
             if not continue_rollout:
                 break
 
-            continue_rollout = False
 
             if self.reset_env:
                 reset_obj = self.env.reset()
@@ -159,6 +158,7 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
             term = termination or truncation
 
             # rollout 3 (end of loop)
+            continue_rollout = None
             for agent in self.get_trainable_workers():
                 rollout_3_info = self.workers[agent].rollout_3(
                     action=actions[agent],
@@ -173,6 +173,9 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
                     rollout_2_info=local_rollout_2_info[agent],
                 )
                 continue_rollout = continue_rollout or rollout_3_info.get('continue_rollout', True)
+            if continue_rollout is None:
+                # no agents are trainable, we should just keep going until the env ends
+                continue_rollout = True
             if term:
                 # environment terminated and must be reset next time
                 self.reset_env = True

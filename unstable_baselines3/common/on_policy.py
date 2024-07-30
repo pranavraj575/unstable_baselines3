@@ -160,7 +160,7 @@ class OnPolicy:
         self._last_episode_starts = dones
         # if current rollout size is less than max rollout size, continue rollout
         return {
-            'continue_rollout': self.num_collected_steps < self.n_steps,
+            'continue_rollout': not rollout_buffer.full,
             'steps_so_far': self.num_collected_steps - self.starting_steps,
         }
 
@@ -185,7 +185,7 @@ class OnPolicy:
         if rollout_buffer is None:
             rollout_buffer = self.rollout_buffer
 
-        if self.num_collected_steps < self.n_steps:
+        if not rollout_buffer.full:
             # if we have not collected enough training steps to fill rollout, continue
             return {'num_collected_steps': self.num_collected_steps - self.starting_steps,
                     'rollout_filled': False,
