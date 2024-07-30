@@ -85,17 +85,9 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
 
         continue_rollout = True
         steps_so_far = 0
-        if self.reset_env:
-            episodes_completed = -1
-            # if we are resetting immedieately, we should start at -1
-        else:
-            episodes_completed = 0
+        episodes_completed = 0
 
         while continue_rollout:
-            if self.reset_env:
-                # if we have just completed an episode, increase the episode counter
-                # we want to terminate the loop before resetting env if possible
-                episodes_completed += 1
             if number_of_eps is not None:
                 if episodes_completed >= number_of_eps:
                     continue_rollout = False
@@ -150,6 +142,7 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
                 actions[agent] = conform_act_shape(act, self.env.action_space(agent=agent), )
 
             self.last_observations, rewards, terminations, truncations, self.last_infos = self.env.step(actions)
+            steps_so_far += 1
             truncation = any([t for (_, t) in truncations.items()])
             termination = any([t for (_, t) in terminations.items()])
             term = termination or truncation
@@ -176,8 +169,8 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
             if term:
                 # environment terminated and must be reset next time
                 self.reset_env = True
+                episodes_completed += 1
 
-            steps_so_far += 1
 
         # end rollout
         local_end_rollout_info = dict()
@@ -193,4 +186,4 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
                 init_learn_info=local_init_learn_info[agent],
                 end_rollout_info=local_end_rollout_info[agent],
             )
-        return steps_so_far, max(0, episodes_completed)
+        return steps_so_far, episodes_completed

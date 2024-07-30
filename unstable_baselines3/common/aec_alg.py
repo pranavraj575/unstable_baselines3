@@ -83,17 +83,9 @@ class AECAlgorithm(MultiAgentAlgorithm):
             local_init_rollout_info[agent] = init_rollout_info
         steps_so_far = 0
         continue_rollout = True
-        if self.reset_env:
-            episodes_completed = -1
-            # if we are resetting immedieately, we should start at -1
-        else:
-            episodes_completed = 0
+        episodes_completed = 0
 
         while continue_rollout:
-            if self.reset_env:
-                # if we have just completed an episode, increase the episode counter
-                # we want to terminate the loop before resetting env if possible
-                episodes_completed += 1
             if number_of_eps is not None:
                 # counter for number of episodes to do
                 if episodes_completed >= number_of_eps:
@@ -123,6 +115,7 @@ class AECAlgorithm(MultiAgentAlgorithm):
                     # there is also no learning to be done here
                     self.reset_env = True
                     self.env.step(None)
+                    episodes_completed += 1
                     continue
 
                 if agent in self.agent_records:
@@ -144,7 +137,6 @@ class AECAlgorithm(MultiAgentAlgorithm):
                         rollout_2_info=old_rollout_2_info,
                     )
 
-                    steps_so_far += 1
                     if strict_timesteps and steps_so_far >= total_timesteps:
                         # if we go over, we should break immedeatley
                         continue_rollout = False
@@ -175,6 +167,7 @@ class AECAlgorithm(MultiAgentAlgorithm):
                     else:
                         act = self.workers[agent].get_action(obs=new_obs)
                 self.env.step(conform_act_shape(act, self.env.action_space(agent=agent), ))
+                steps_so_far += 1
 
         # end rollout
         local_end_rollout_info = dict()

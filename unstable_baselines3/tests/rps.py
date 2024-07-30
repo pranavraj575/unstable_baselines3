@@ -13,7 +13,7 @@ from unstable_baselines3.common.auto_multi_alg import AutoMultiAgentAlgorithm
 from stable_baselines3.common.utils import spaces
 import os, sys
 
-Worker = WorkerDQN
+Worker = WorkerPPO
 
 kwargs = {'batch_size': 128,
           'gamma': 0,
@@ -23,13 +23,14 @@ if issubclass(Worker, DQN):
     kwargs['learning_starts'] = 128
 else:
     MlpPolicy = PPOPolicy
-    kwargs['n_steps'] = 128
+    kwargs['n_steps'] = 4
+    kwargs['batch_size'] = 4
 
 DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.join(os.getcwd(), sys.argv[0]))))
 
 # both work
-env = rps_v2.env()
-#env = rps_v2.parallel_env()
+#env = rps_v2.env()
+env = rps_v2.parallel_env()
 
 
 env.reset()
@@ -79,7 +80,7 @@ thingy = AutoMultiAgentAlgorithm(policy=MlpPolicy,
                                  # DefaultWorkerClass is only for if all players are not specified in workers
                                  )
 print('starting training1')
-thingy.learn(total_timesteps=4096*4)
+thingy.learn(total_timesteps=4096)
 print('trained')
 
 # display
