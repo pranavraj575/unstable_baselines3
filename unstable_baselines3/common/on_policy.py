@@ -233,6 +233,7 @@ class OnPolicy:
         callback.on_training_end()
 
     def update_from_buffer(self, local_buffer):
+        updated = False
         init_learn_info = self.init_learn(callback=None,
                                           total_timesteps=local_buffer.size()
                                           )
@@ -265,6 +266,7 @@ class OnPolicy:
                 value=value,
                 log_prob=log_prob,
             )
-            self.potential_train_from_rollout(init_learn_info=init_learn_info)
+            updated = updated or self.potential_train_from_rollout(init_learn_info=init_learn_info)
         end_rollout_info = self.end_rollout(init_learn_info=init_learn_info, init_rollout_info=init_rollout_info)
         self.finish_learn(init_learn_info=init_learn_info, end_rollout_info=end_rollout_info)
+        return updated

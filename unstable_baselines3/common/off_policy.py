@@ -162,9 +162,11 @@ class OffPolicy:
         return {'num_collected_steps': self.num_collected_steps}
 
     def finish_learn(self, init_learn_info, end_rollout_info):
+        updated = False
         callback = init_learn_info.get('callback')
         episode_timesteps = self.num_collected_steps*self.env.num_envs
         if self.num_timesteps > 0 and self.num_timesteps > self.learning_starts:
+            updated = True
             # If no `gradient_steps` is specified,
             # do as many gradients steps as steps performed during the rollout
             gradient_steps = self.gradient_steps if self.gradient_steps >= 0 else episode_timesteps
@@ -173,6 +175,7 @@ class OffPolicy:
                 self.train(batch_size=self.batch_size, gradient_steps=gradient_steps)
 
         callback.on_training_end()
+        return updated
 
     def update_from_buffer(self, local_buffer):
         init_learn_info = self.init_learn(callback=None, total_timesteps=local_buffer.size())
@@ -217,4 +220,4 @@ class OffPolicy:
             self.num_timesteps += 1
             self.num_collected_steps += 1
         end_rollout_info = self.end_rollout(init_learn_info=init_learn_info, init_rollout_info=init_rollout_info)
-        self.finish_learn(init_learn_info=init_learn_info, end_rollout_info=end_rollout_info)
+        return self.finish_learn(init_learn_info=init_learn_info, end_rollout_info=end_rollout_info)
