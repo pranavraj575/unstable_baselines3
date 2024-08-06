@@ -174,7 +174,7 @@ class OffPolicy:
 
         callback.on_training_end()
 
-    def update_from_rollout(self, local_buffer):
+    def update_from_buffer(self, local_buffer):
         if local_buffer.full:
             pos_0 = (local_buffer.pos + 1)%local_buffer.buffer_size
         else:
