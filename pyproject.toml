@@ -1,6 +1,6 @@
 [project]
 name = "unstable_baselines3"
-version = "0.0.30469"
+version = "0.0.30569"
 authors = [
   { name="Pranav", email="pranavraj575@gmail.com" },
 ]

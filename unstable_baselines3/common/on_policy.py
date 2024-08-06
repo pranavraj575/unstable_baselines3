@@ -178,6 +178,38 @@ class OnPolicy:
         actions, values, log_probs = self.policy(obs_tensor)
         return actions, (values, log_probs)
 
+    def potential_train_from_rollout(self, init_learn_info):
+        if self.rollout_buffer.full:
+            callback = init_learn_info.get('callback')
+            log_interval = init_learn_info.get('log_interval')
+            total_timesteps = init_learn_info.get('total_timesteps')
+            dones = self._last_episode_starts
+
+            with torch.no_grad():
+                # Compute value for the last timestep
+                values = self.policy.predict_values(
+                    obs_as_tensor(self._last_obs, self.device))  # type: ignore[arg-type]
+
+            self.rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
+
+            callback.update_locals(locals())
+
+            callback.on_rollout_end()
+
+            self.iteration += 1
+            self._update_current_progress_remaining(self.num_timesteps, total_timesteps)
+
+            # Display training infos
+            if log_interval is not None and self.iteration%log_interval == 0:
+                assert self.ep_info_buffer is not None
+                self._dump_logs(self.iteration)
+
+            self.train()
+            # we just trained on the buffer, so we should reset the buffer time we initialize an episode
+            self.reset_rollout = True
+            return True
+        return False
+
     def end_rollout(self,
                     init_learn_info,
                     init_rollout_info,
@@ -191,32 +223,7 @@ class OnPolicy:
             return {'num_collected_steps': self.num_collected_steps - self.starting_steps,
                     'rollout_filled': False,
                     }
-        callback = init_learn_info.get('callback')
-        log_interval = init_learn_info.get('log_interval')
-        total_timesteps = init_learn_info.get('total_timesteps')
-        dones = self._last_episode_starts
-
-        with torch.no_grad():
-            # Compute value for the last timestep
-            values = self.policy.predict_values(obs_as_tensor(self._last_obs, self.device))  # type: ignore[arg-type]
-
-        rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
-
-        callback.update_locals(locals())
-
-        callback.on_rollout_end()
-
-        self.iteration += 1
-        self._update_current_progress_remaining(self.num_timesteps, total_timesteps)
-
-        # Display training infos
-        if log_interval is not None and self.iteration%log_interval == 0:
-            assert self.ep_info_buffer is not None
-            self._dump_logs(self.iteration)
-
-        self.train()
-        # we just trained on the buffer, so we should reset the buffer time we initialize an episode
-        self.reset_rollout = True
+        self.potential_train_from_rollout(init_learn_info=init_learn_info)
         return {'num_collected_steps': self.num_collected_steps - self.starting_steps,
                 'rollout_filled': True,
                 }
@@ -226,6 +233,10 @@ class OnPolicy:
         callback.on_training_end()
 
     def update_from_buffer(self, local_buffer):
+        init_learn_info = self.init_learn(callback=None,
+                                          total_timesteps=local_buffer.size()
+                                          )
+        init_rollout_info = self.init_rollout(init_learn_info=init_learn_info)
         if local_buffer.full:
             pos_0 = (local_buffer.pos + 1)%local_buffer.buffer_size
         else:
@@ -254,16 +265,6 @@ class OnPolicy:
                 value=value,
                 log_prob=log_prob,
             )
-            if self.rollout_buffer.full:
-                dones = self._last_episode_starts
-
-                with torch.no_grad():
-                    # Compute value for the last timestep
-                    values = self.policy.predict_values(
-                        obs_as_tensor(self._last_obs, self.device))  # type: ignore[arg-type]
-
-                self.rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
-
-                self.train()
-                # we just trained on the buffer, so we should reset the buffer time we initialize an episode
-                self.reset_rollout = True
+            self.potential_train_from_rollout(init_learn_info=init_learn_info)
+        end_rollout_info = self.end_rollout(init_learn_info=init_learn_info, init_rollout_info=init_rollout_info)
+        self.finish_learn(init_learn_info=init_learn_info, end_rollout_info=end_rollout_info)
