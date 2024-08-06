@@ -3,7 +3,6 @@ from typing import Union
 
 from unstable_baselines3.common.common import DumEnv
 from unstable_baselines3.utils.dict_keys import DICT_TRAIN
-from unstable_baselines3.ppo.PPO import WorkerPPO
 
 from stable_baselines3.ppo import MlpPolicy
 
@@ -13,7 +12,7 @@ class MultiAgentAlgorithm:
                  env: Union[AECEnv, ParallelEnv],
                  workers,
                  policy=MlpPolicy,
-                 DefaultWorkerClass=WorkerPPO,
+                 DefaultWorkerClass=None,
                  worker_infos=None,
                  **worker_kwargs
                  ):
@@ -51,6 +50,8 @@ class MultiAgentAlgorithm:
                             obs_space=env.observation_space(agent=agent),
                             )
             if agent not in workers:
+                if DefaultWorkerClass is None:
+                    raise Exception("agent", agent, 'is not specified, and neither is DefaultWorkerClass')
                 workers[agent] = DefaultWorkerClass(policy=policy,
                                                     env=dumenv,
                                                     **worker_kwargs,
