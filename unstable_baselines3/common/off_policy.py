@@ -1,6 +1,7 @@
 import numpy as np
 
 from stable_baselines3.common.type_aliases import TrainFreq
+from stable_baselines3.common.buffers import DictReplayBuffer
 
 from unstable_baselines3.common.common import conform_shape
 
@@ -172,3 +173,50 @@ class OffPolicy:
                 self.train(batch_size=self.batch_size, gradient_steps=gradient_steps)
 
         callback.on_training_end()
+
+    def update_from_rollout(self, local_buffer):
+        if local_buffer.full:
+            pos_0 = (local_buffer.pos + 1)%local_buffer.buffer_size
+        else:
+            pos_0 = 0
+
+        for i in range(local_buffer.size()):
+            pos = (i + pos_0)%local_buffer.buffer_size
+            if isinstance(local_buffer, DictReplayBuffer):
+                assert isinstance(self.replay_buffer, DictReplayBuffer)
+                obs = {key: local_buffer.observations[key][pos]
+                       for key in local_buffer.observations}
+            else:
+                obs = local_buffer.observations[pos]
+            action = local_buffer.actions[pos]
+            reward = local_buffer.rewards[pos]
+            done = local_buffer.dones[pos]
+            infos = [{'TimeLimit.truncated': True} if timeout else {}
+                     for timeout in local_buffer.timeouts[pos]]
+            if local_buffer.optimize_memory_usage:
+                next_obs = local_buffer.observations[(pos + 1)%local_buffer.buffer_size]
+            else:
+                if isinstance(local_buffer, DictReplayBuffer):
+                    assert isinstance(self.replay_buffer, DictReplayBuffer)
+                    next_obs = {key: local_buffer.next_observations[key][pos]
+                                for key in local_buffer.next_observations}
+                else:
+                    next_obs = local_buffer.next_observations[pos]
+            self.replay_buffer.add(
+                obs=obs,
+                next_obs=next_obs,
+                action=action,
+                reward=reward,
+                done=done,
+                infos=infos,
+            )
+
+            # add one timestep of data
+            self.num_timesteps += 1
+        if self.num_timesteps > 0 and self.num_timesteps > self.learning_starts:
+            # If no `gradient_steps` is specified,
+            # do as many gradients steps as steps performed during the rollout
+            gradient_steps = self.gradient_steps if self.gradient_steps >= 0 else local_buffer.size()
+            # Special case when the user passes `gradient_steps=0`
+            if gradient_steps > 0:
+                self.train(batch_size=self.batch_size, gradient_steps=gradient_steps)

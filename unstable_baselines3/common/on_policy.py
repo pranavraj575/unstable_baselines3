@@ -3,6 +3,8 @@ import torch
 from gymnasium import spaces
 
 from stable_baselines3.common.utils import obs_as_tensor
+from stable_baselines3.common.buffers import DictRolloutBuffer
+
 from unstable_baselines3.common.common import conform_shape, conform_act_shape
 
 
@@ -169,10 +171,10 @@ class OnPolicy:
         # Convert to pytorch tensor or to TensorDict
         # TODO: why for image spaces does this work
         obs_tensor = obs_as_tensor(self._last_obs, self.device)
-        if isinstance(obs_tensor,dict):
+        if isinstance(obs_tensor, dict):
             pass
         else:
-            obs_tensor=obs_tensor.unsqueeze(0)
+            obs_tensor = obs_tensor.unsqueeze(0)
         actions, values, log_probs = self.policy(obs_tensor)
         return actions, (values, log_probs)
 
@@ -222,3 +224,46 @@ class OnPolicy:
     def finish_learn(self, init_learn_info, end_rollout_info):
         callback = init_learn_info.get('callback')
         callback.on_training_end()
+
+    def update_from_buffer(self, local_buffer):
+        if local_buffer.full:
+            pos_0 = (local_buffer.pos + 1)%local_buffer.buffer_size
+        else:
+            pos_0 = 0
+        for i in range(local_buffer.size()):
+            pos = (i + pos_0)%local_buffer.buffer_size
+            if isinstance(local_buffer, DictRolloutBuffer):
+                assert isinstance(self.rollout_buffer, DictRolloutBuffer)
+                obs = {key: local_buffer.observations[key][pos]
+                       for key in local_buffer.observations}
+            else:
+                obs = local_buffer.observations[pos]
+            action = local_buffer.actions[pos]
+            reward = local_buffer.rewards[pos]
+            episode_start = local_buffer.episode_starts[pos]
+            value = torch.tensor(local_buffer.values[pos])
+            log_prob = torch.tensor(local_buffer.log_probs[pos])
+            if self.reset_rollout:
+                self.rollout_buffer.reset()
+                self.reset_rollout = False
+            self.rollout_buffer.add(
+                obs=obs,
+                action=action,
+                reward=reward,
+                episode_start=episode_start,
+                value=value,
+                log_prob=log_prob,
+            )
+            if self.rollout_buffer.full:
+                dones = self._last_episode_starts
+
+                with torch.no_grad():
+                    # Compute value for the last timestep
+                    values = self.policy.predict_values(
+                        obs_as_tensor(self._last_obs, self.device))  # type: ignore[arg-type]
+
+                self.rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
+
+                self.train()
+                # we just trained on the buffer, so we should reset the buffer time we initialize an episode
+                self.reset_rollout = True
