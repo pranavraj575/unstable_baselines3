@@ -56,7 +56,7 @@ class MultiAgentAlgorithm:
                                                     env=dumenv,
                                                     **worker_kwargs,
                                                     )
-            elif worker_infos[agent].get(DICT_TRAIN, True):
+            elif 'set_env' in dir(worker_infos[agent]):
                 # in this case, we should probably set the environment anyway
                 workers[agent].set_env(dumenv)
 
