@@ -2,7 +2,7 @@ from pettingzoo import AECEnv, ParallelEnv
 from typing import Union
 
 from unstable_baselines3.common.common import DumEnv
-from unstable_baselines3.utils.dict_keys import DICT_TRAIN
+from unstable_baselines3.utils.dict_keys import DICT_TRAIN, DICT_COLLECT_ONLY
 
 from stable_baselines3.ppo import MlpPolicy
 
@@ -117,14 +117,17 @@ class MultiAgentAlgorithm:
         Returns: iterable of trainable or untrainable workers
         """
         for agent in self.workers:
-            is_trainable = self.worker_info[agent].get(DICT_TRAIN, True)
+            # to train, it must be trainable (assumed true) and must not be on collect only mode (assumed false)
+            is_trainable = (self.worker_info[agent].get(DICT_TRAIN, True) and
+                            not self.worker_info[agent].get(DICT_COLLECT_ONLY, False)
+                            )
             if is_trainable == trainable:  # either both true or both false
                 yield agent
 
-    def get_trainable_workers(self):
+    def get_workers_to_train(self):
         return self._get_worker_iter(trainable=True)
 
-    def get_untrainable_workers(self):
+    def get_workers_to_not_train(self):
         return self._get_worker_iter(trainable=False)
 
     def learn_episode(self,

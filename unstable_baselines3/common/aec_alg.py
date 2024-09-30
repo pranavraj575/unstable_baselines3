@@ -45,7 +45,7 @@ class AECAlgorithm(MultiAgentAlgorithm):
             **worker_kwargs,
         )
         self.agent_records = dict()
-        self.trainable_workers = set(self.get_trainable_workers())
+        self.trainable_workers = set(self.get_workers_to_train())
 
     def learn_episode(self,
                       total_timesteps,
@@ -67,7 +67,7 @@ class AECAlgorithm(MultiAgentAlgorithm):
 
         # init learn
         local_init_learn_info = dict()
-        for agent in self.get_trainable_workers():
+        for agent in self.get_workers_to_train():
             init_learn_info = self.workers[agent].init_learn(
                 total_timesteps=total_timesteps,
                 callback=callbacks[agent],
@@ -76,7 +76,7 @@ class AECAlgorithm(MultiAgentAlgorithm):
 
         # init rollout
         local_init_rollout_info = dict()
-        for agent in self.get_trainable_workers():
+        for agent in self.get_workers_to_train():
             init_rollout_info = self.workers[agent].init_rollout(
                 init_learn_info=local_init_learn_info[agent],
             )
@@ -171,14 +171,14 @@ class AECAlgorithm(MultiAgentAlgorithm):
 
         # end rollout
         local_end_rollout_info = dict()
-        for agent in self.get_trainable_workers():
+        for agent in self.get_workers_to_train():
             end_rollout_info = self.workers[agent].end_rollout(
                 init_learn_info=local_init_learn_info[agent],
                 init_rollout_info=local_init_rollout_info[agent],
             )
             local_end_rollout_info[agent] = end_rollout_info
 
-        for agent in self.get_trainable_workers():
+        for agent in self.get_workers_to_train():
             self.workers[agent].finish_learn(
                 init_learn_info=local_init_learn_info[agent],
                 end_rollout_info=local_end_rollout_info[agent],
