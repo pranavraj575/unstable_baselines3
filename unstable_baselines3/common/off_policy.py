@@ -156,16 +156,21 @@ class OffPolicy:
     def end_rollout(self,
                     init_learn_info,
                     init_rollout_info,
+                    collect_only=False,
                     ):
         callback = init_learn_info.get('callback')
         callback.on_rollout_end()
         return {'num_collected_steps': self.num_collected_steps}
 
-    def finish_learn(self, init_learn_info, end_rollout_info):
+    def finish_learn(self,
+                     init_learn_info,
+                     end_rollout_info,
+                     collect_only=False,
+                     ):
         updated = False
         callback = init_learn_info.get('callback')
         episode_timesteps = self.num_collected_steps*self.env.num_envs
-        if self.num_timesteps > 0 and self.num_timesteps > self.learning_starts:
+        if (not collect_only) and self.num_timesteps > 0 and self.num_timesteps > self.learning_starts:
             updated = True
             # If no `gradient_steps` is specified,
             # do as many gradients steps as steps performed during the rollout

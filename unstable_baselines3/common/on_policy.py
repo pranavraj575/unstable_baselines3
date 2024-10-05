@@ -178,7 +178,8 @@ class OnPolicy:
         actions, values, log_probs = self.policy(obs_tensor)
         return actions, (values, log_probs)
 
-    def potential_train_from_rollout(self, init_learn_info):
+    def potential_train_from_rollout(self, init_learn_info, collect_only):
+        if collect_only: return False
         if self.rollout_buffer.full:
             callback = init_learn_info.get('callback')
             log_interval = init_learn_info.get('log_interval')
@@ -214,6 +215,7 @@ class OnPolicy:
                     init_learn_info,
                     init_rollout_info,
                     rollout_buffer=None,
+                    collect_only=False,
                     ):
         if rollout_buffer is None:
             rollout_buffer = self.rollout_buffer
@@ -223,12 +225,12 @@ class OnPolicy:
             return {'num_collected_steps': self.num_collected_steps - self.starting_steps,
                     'rollout_filled': False,
                     }
-        self.potential_train_from_rollout(init_learn_info=init_learn_info)
+        self.potential_train_from_rollout(init_learn_info=init_learn_info, collect_only=collect_only, )
         return {'num_collected_steps': self.num_collected_steps - self.starting_steps,
                 'rollout_filled': True,
                 }
 
-    def finish_learn(self, init_learn_info, end_rollout_info):
+    def finish_learn(self, init_learn_info, end_rollout_info, collect_only=False, ):
         callback = init_learn_info.get('callback')
         callback.on_training_end()
 
@@ -266,7 +268,7 @@ class OnPolicy:
                 value=value,
                 log_prob=log_prob,
             )
-            updated = updated or self.potential_train_from_rollout(init_learn_info=init_learn_info)
+            updated = updated or self.potential_train_from_rollout(init_learn_info=init_learn_info, collect_only=False)
         end_rollout_info = self.end_rollout(init_learn_info=init_learn_info, init_rollout_info=init_rollout_info)
         self.finish_learn(init_learn_info=init_learn_info, end_rollout_info=end_rollout_info)
         return updated

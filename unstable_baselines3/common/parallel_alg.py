@@ -68,7 +68,7 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
 
         # init learn
         local_init_learn_info = dict()
-        for agent in self.get_workers_to_train():
+        for agent in self.get_worker_iter(trainable=True, collectable=None):
             init_learn_info = self.workers[agent].init_learn(
                 total_timesteps=total_timesteps,
                 callback=callbacks[agent],
@@ -77,7 +77,7 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
 
         # init rollout
         local_init_rollout_info = dict()
-        for agent in self.get_workers_to_train():
+        for agent in self.get_worker_iter(trainable=True, collectable=None):
             init_rollout_info = self.workers[agent].init_rollout(
                 init_learn_info=local_init_learn_info[agent],
             )
@@ -108,7 +108,7 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
 
             # rollout 1 (start of loop)
             local_rollout_1_info = dict()
-            for agent in self.get_workers_to_train():
+            for agent in self.get_worker_iter(trainable=True, collectable=None):
                 rollout_1_info = self.workers[agent].rollout_1(
                     init_learn_info=local_init_learn_info[agent],
                     init_rollout_info=local_init_rollout_info[agent],
@@ -118,7 +118,7 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
             # rollout 2 (middle of loop, action selection)
             actions = dict()
             local_rollout_2_info = dict()
-            for agent in self.get_workers_to_train():
+            for agent in self.get_worker_iter(trainable=True, collectable=None):
                 act, rollout_2_info = self.workers[agent].rollout_2(
                     obs=self.last_observations[agent],
                     init_learn_info=local_init_learn_info[agent],
@@ -128,7 +128,7 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
                 actions[agent] = conform_act_shape(act, self.env.action_space(agent=agent), )
                 local_rollout_2_info[agent] = rollout_2_info
             # also handle the untrainable agents
-            for agent in self.get_workers_to_not_train():
+            for agent in self.get_worker_iter(trainable=False, collectable=None):
                 if isinstance(self.workers[agent], BaseAlgorithm):
                     act, _ = self.workers[agent].get_action(
                         obs=self.last_observations[agent]
@@ -149,7 +149,7 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
 
             # rollout 3 (end of loop)
             continue_rollout = None
-            for agent in self.get_workers_to_train():
+            for agent in self.get_worker_iter(trainable=True, collectable=None):
                 rollout_3_info = self.workers[agent].rollout_3(
                     action=actions[agent],
                     new_obs=self.last_observations[agent],
@@ -171,19 +171,33 @@ class ParallelAlgorithm(MultiAgentAlgorithm):
                 self.reset_env = True
                 episodes_completed += 1
 
-
         # end rollout
         local_end_rollout_info = dict()
-        for agent in self.get_workers_to_train():
+        for agent in self.get_worker_iter(trainable=True, collectable=False):
             end_rollout_info = self.workers[agent].end_rollout(
                 init_learn_info=local_init_learn_info[agent],
                 init_rollout_info=local_init_rollout_info[agent],
+                collect_only=False,
+            )
+            local_end_rollout_info[agent] = end_rollout_info
+        for agent in self.get_worker_iter(trainable=True, collectable=True):
+            end_rollout_info = self.workers[agent].end_rollout(
+                init_learn_info=local_init_learn_info[agent],
+                init_rollout_info=local_init_rollout_info[agent],
+                collect_only=True,
             )
             local_end_rollout_info[agent] = end_rollout_info
 
-        for agent in self.get_workers_to_train():
+        for agent in self.get_worker_iter(trainable=True, collectable=False):
             self.workers[agent].finish_learn(
                 init_learn_info=local_init_learn_info[agent],
                 end_rollout_info=local_end_rollout_info[agent],
+                collect_only=False,
+            )
+        for agent in self.get_worker_iter(trainable=True, collectable=True):
+            self.workers[agent].finish_learn(
+                init_learn_info=local_init_learn_info[agent],
+                end_rollout_info=local_end_rollout_info[agent],
+                collect_only=True,
             )
         return steps_so_far, episodes_completed

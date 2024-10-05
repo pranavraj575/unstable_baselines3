@@ -109,26 +109,20 @@ class MultiAgentAlgorithm:
                     break
         return timestep_counter, episode_counter
 
-    def _get_worker_iter(self, trainable):
+    def get_worker_iter(self, trainable, collectable=None):
         """
         Args:
             trainable: if true, returns trainable workers
                 else, untrainable workers
+            collectable: includes collect only, None if unspecifed
         Returns: iterable of trainable or untrainable workers
         """
         for agent in self.workers:
-            # to train, it must be trainable (assumed true) and must not be on collect only mode (assumed false)
-            is_trainable = (self.worker_info[agent].get(DICT_TRAIN, True) and
-                            not self.worker_info[agent].get(DICT_COLLECT_ONLY, False)
-                            )
-            if is_trainable == trainable:  # either both true or both false
-                yield agent
-
-    def get_workers_to_train(self):
-        return self._get_worker_iter(trainable=True)
-
-    def get_workers_to_not_train(self):
-        return self._get_worker_iter(trainable=False)
+            if self.worker_info[agent].get(DICT_TRAIN, True) ==trainable:  # match the thingies
+                if collectable is None:
+                    yield agent
+                elif self.worker_info[agent].get(DICT_COLLECT_ONLY, False) == collectable:
+                    yield agent
 
     def learn_episode(self,
                       total_timesteps,
